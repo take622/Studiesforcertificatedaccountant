@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CPA Study Tracker</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{min-height:100%;background:#0d1117;font-family:'Hiragino Kaku Gothic ProN','Noto Sans JP',sans-serif;color:#e2e8f0;}
+button{-webkit-tap-highlight-color:transparent;touch-action:manipulation;cursor:pointer;font-family:inherit;}
+
+/* ===== LOGIN ===== */
+#login-screen{min-height:100vh;background:#0f1923;display:flex;align-items:center;justify-content:center;padding:24px 16px;}
+.lcard{width:100%;max-width:360px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.13);border-radius:20px;padding:36px 24px 40px;}
+.llogo{text-align:center;margin-bottom:28px;}
+.llogo .em{font-size:52px;display:block;margin-bottom:10px;}
+.llogo h1{color:#fff;font-size:20px;font-weight:700;}
+.llogo p{color:rgba(255,255,255,0.4);font-size:12px;margin-top:5px;}
+.tabbar{display:flex;background:rgba(0,0,0,0.35);border-radius:10px;padding:4px;margin-bottom:24px;}
+.tabbar button{flex:1;padding:10px;border:none;border-radius:7px;font-size:14px;font-weight:600;background:transparent;color:rgba(255,255,255,0.55);}
+.tabbar button.on{background:#63b3ed;color:#1a1a2e;}
+.lfield{margin-bottom:16px;}
+.lfield label{display:block;color:rgba(255,255,255,0.65);font-size:14px;margin-bottom:7px;}
+.lfield input{display:block;width:100%;padding:14px;font-size:16px;color:#fff;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:10px;outline:none;-webkit-appearance:none;}
+.errbox{background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);border-radius:8px;padding:10px 14px;color:#fca5a5;font-size:13px;margin-bottom:14px;display:none;}
+.pbtn{display:block;width:100%;padding:15px;font-size:16px;font-weight:700;background:#4299e1;border:none;border-radius:10px;color:#fff;}
+.pbtn:disabled{background:rgba(99,179,237,0.3);}
+
+/* ===== APP ===== */
+#app{display:none;min-height:100vh;padding-bottom:60px;}
+
+/* topbar */
+#topbar{position:sticky;top:0;z-index:100;background:#0d1117;border-bottom:1px solid rgba(255,255,255,0.08);padding:10px 14px;display:flex;align-items:center;gap:8px;}
+.mascot-btn{background:none;border:none;font-size:26px;padding:4px;line-height:1;}
+.clock-area{flex:1;text-align:center;}
+#clock{font-size:20px;font-weight:800;color:#63b3ed;letter-spacing:.04em;line-height:1.1;}
+#datedisp{font-size:11px;color:rgba(255,255,255,0.4);margin-top:2px;}
+.topright{display:flex;gap:6px;align-items:center;}
+#syncdot{width:8px;height:8px;border-radius:50%;background:#48bb78;}
+.ibtn{background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:6px 9px;font-size:14px;color:rgba(255,255,255,0.7);}
+
+/* bubble */
+#bubble{position:fixed;top:64px;left:50%;transform:translateX(-50%);z-index:200;background:#2d3748;border:1px solid rgba(99,179,237,0.4);border-radius:14px;padding:11px 18px;max-width:88vw;font-size:14px;color:#bee3f8;box-shadow:0 8px 28px rgba(0,0,0,0.45);display:none;}
+
+/* summary */
+#summary{padding:14px;display:grid;grid-template-columns:1fr 1fr;gap:10px;max-width:600px;margin:0 auto;}
+.sc{background:rgba(255,255,255,0.04);border-radius:14px;padding:13px 12px;}
+.sc .si{font-size:18px;margin-bottom:4px;}
+.sc .sl{font-size:11px;color:rgba(255,255,255,0.45);margin-bottom:3px;}
+.sc .sv{font-size:26px;font-weight:800;line-height:1;}
+.sc .su{font-size:12px;font-weight:400;margin-left:3px;}
+
+/* overall progress */
+#overall-wrap{padding:0 14px 4px;max-width:600px;margin:0 auto;display:none;}
+.overall-card{background:rgba(255,255,255,0.04);border:1px solid rgba(139,92,246,0.25);border-radius:14px;padding:14px 16px;}
+.overall-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+.overall-label{display:flex;align-items:center;gap:7px;font-size:13px;color:rgba(255,255,255,0.65);font-weight:600;}
+.overall-val{font-size:24px;font-weight:800;color:#a78bfa;line-height:1;}
+.overall-sub{font-size:11px;color:rgba(255,255,255,0.35);margin-left:6px;}
+.overall-bar{height:8px;background:rgba(255,255,255,0.08);border-radius:4px;overflow:hidden;}
+.overall-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,#7c3aed,#a78bfa);transition:width .6s ease;}
+
+/* books */
+#bsec{padding:14px;max-width:600px;margin:0 auto;}
+.sechead{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+.sectitle{font-size:15px;font-weight:700;color:rgba(255,255,255,0.75);}
+.abtn{background:#4299e1;border:none;border-radius:8px;padding:8px 14px;color:#fff;font-size:13px;font-weight:700;}
+.empty{text-align:center;padding:40px 20px;color:rgba(255,255,255,0.25);border:2px dashed rgba(255,255,255,0.08);border-radius:16px;}
+.empty .eic{font-size:36px;margin-bottom:10px;}
+
+/* book card */
+.bcard{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:14px;margin-bottom:10px;}
+.btop{display:flex;gap:12px;}
+.bcover{width:44px;height:60px;border-radius:6px;flex-shrink:0;background:#2d3748;display:flex;align-items:center;justify-content:center;font-size:20px;overflow:hidden;}
+.bcover img{width:100%;height:100%;object-fit:cover;}
+.binfo{flex:1;min-width:0;}
+.bname{font-weight:700;font-size:15px;margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.bpages{font-size:12px;color:rgba(255,255,255,0.45);margin-bottom:7px;}
+.pbar{height:5px;background:rgba(255,255,255,0.08);border-radius:3px;overflow:hidden;}
+.pfill{height:100%;border-radius:3px;transition:width .4s;}
+.bact{display:flex;justify-content:space-between;align-items:center;margin-top:12px;gap:6px;}
+.pbtns,.cbtns{display:flex;gap:5px;}
+.cbtns{gap:4px;}
+.sb{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:7px 10px;font-size:13px;font-weight:700;color:rgba(255,255,255,0.6);min-width:34px;}
+.sb:active{opacity:.6;}
+.sb.g{background:rgba(104,211,145,0.12);border-color:rgba(104,211,145,0.35);color:#68d391;}
+.sb.r{background:rgba(252,129,129,0.12);border-color:rgba(252,129,129,0.35);color:#fc8181;}
+.sb.b{background:rgba(99,179,237,0.12);border-color:rgba(99,179,237,0.35);color:#63b3ed;}
+.sb.gy{background:rgba(160,174,192,0.12);border-color:rgba(160,174,192,0.35);color:#a0aec0;}
+.sb:disabled{opacity:.25;cursor:not-allowed;}
+
+/* ===== SHEET OVERLAY ===== */
+.ov{position:fixed;inset:0;z-index:300;background:rgba(0,0,0,0.78);display:none;align-items:flex-end;justify-content:center;}
+.ov.open{display:flex;}
+.sheet{background:#1e2a3a;border:1px solid rgba(255,255,255,0.1);border-radius:20px 20px 0 0;padding:22px 18px 50px;width:100%;max-width:500px;max-height:88vh;overflow-y:scroll;-webkit-overflow-scrolling:touch;}
+.shhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;}
+.shtitle{font-size:16px;font-weight:700;}
+.xbtn{background:none;border:none;color:rgba(255,255,255,0.4);font-size:22px;padding:4px;line-height:1;}
+.sfield{margin-bottom:16px;}
+.sfield label{display:block;color:rgba(255,255,255,0.65);font-size:14px;margin-bottom:7px;}
+.sfield input{display:block;width:100%;padding:13px 14px;font-size:16px;color:#fff;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:10px;outline:none;-webkit-appearance:none;}
+.ibox{margin-top:16px;padding:12px;background:rgba(255,255,255,0.04);border-radius:10px;font-size:12px;color:rgba(255,255,255,0.3);line-height:1.9;}
+
+/* ===== CONFIRM ===== */
+#cfov{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.82);display:none;align-items:center;justify-content:center;padding:20px;}
+#cfov.open{display:flex;}
+.cfbox{background:#1e2533;border:1px solid rgba(255,255,255,0.15);border-radius:16px;padding:28px 20px 24px;width:100%;max-width:300px;text-align:center;}
+.cfbox p{color:#e2e8f0;font-size:16px;line-height:1.65;margin-bottom:24px;}
+.cfbtns{display:flex;gap:10px;}
+.cfbtns button{flex:1;padding:13px;border-radius:10px;font-size:15px;font-weight:700;border:none;}
+#cf-cancel{background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15)!important;color:rgba(255,255,255,0.75);}
+#cf-ok{background:#e53e3e;color:#fff;}
+#cf-ok.blue{background:#4299e1;}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="lcard">
+    <div class="llogo">
+      <span class="em">📚</span>
+      <h1>CPA Study Tracker</h1>
+      <p>合格への道を、一緒に歩もう</p>
+    </div>
+    <div class="tabbar">
+      <button id="tab-l" class="on" onclick="switchTab(false)">ログイン</button>
+      <button id="tab-s" onclick="switchTab(true)">新規登録</button>
+    </div>
+    <div class="lfield">
+      <label for="l-email">メールアドレス</label>
+      <input type="email" id="l-email" placeholder="example@email.com" autocomplete="email" autocorrect="off" autocapitalize="off" spellcheck="false">
+    </div>
+    <div class="lfield">
+      <label for="l-pass">パスワード</label>
+      <input type="password" id="l-pass" placeholder="6文字以上" autocomplete="current-password">
+    </div>
+    <div class="errbox" id="l-err"></div>
+    <button class="pbtn" id="l-btn" onclick="doAuth()">ログイン</button>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div id="topbar">
+    <button class="mascot-btn" onclick="showMsg()">📚</button>
+    <div class="clock-area">
+      <div id="clock">00:00:00</div>
+      <div id="datedisp"></div>
+    </div>
+    <div class="topright">
+      <div id="syncdot"></div>
+      <button class="ibtn" onclick="openSettings()">⚙️</button>
+      <button class="ibtn" onclick="askLogout()">🚪</button>
+    </div>
+  </div>
+
+  <div id="bubble"></div>
+
+  <div id="summary">
+    <div class="sc" style="border:1px solid rgba(252,129,129,0.2)">
+      <div class="si">📅</div><div class="sl">残ノルマ</div>
+      <div class="sv" style="color:#fc8181"><span id="v-rem">0</span><span class="su">p</span></div>
+    </div>
+    <div class="sc" style="border:1px solid rgba(104,211,145,0.2)">
+      <div class="si">✏️</div><div class="sl">今日の進捗</div>
+      <div class="sv" style="color:#68d391"><span id="v-today">0</span><span class="su">p</span></div>
+    </div>
+    <div class="sc" style="border:1px solid rgba(99,179,237,0.2);cursor:pointer" onclick="openSettings()">
+      <div class="si">🎯</div><div class="sl">週間目標</div>
+      <div class="sv" style="color:#63b3ed"><span id="v-goal">100</span><span class="su">p</span></div>
+    </div>
+    <div class="sc" style="border:1px solid rgba(246,173,85,0.2)">
+      <div class="si">📖</div><div class="sl">教材数</div>
+      <div class="sv" style="color:#f6ad55"><span id="v-cnt">0</span><span class="su">冊</span></div>
+    </div>
+  </div>
+
+  <!-- 全体進捗バー -->
+  <div id="overall-wrap">
+    <div class="overall-card">
+      <div class="overall-top">
+        <div class="overall-label"><span>🎓</span>全体進捗</div>
+        <div>
+          <span class="overall-val" id="v-pct">0</span><span style="font-size:13px;color:rgba(255,255,255,0.5)">%</span>
+          <span class="overall-sub" id="v-pages"></span>
+        </div>
+      </div>
+      <div class="overall-bar"><div class="overall-fill" id="overall-fill" style="width:0%"></div></div>
+    </div>
+  </div>
+
+  <div id="bsec">
+    <div class="sechead">
+      <span class="sectitle">📚 教材一覧</span>
+      <button class="abtn" onclick="openAdd()">＋ 追加</button>
+    </div>
+    <div id="blist"></div>
+  </div>
+</div>
+
+<!-- 教材モーダル -->
+<div class="ov" id="book-ov" onclick="ovClick(event,'book-ov')">
+  <div class="sheet">
+    <div class="shhead">
+      <span class="shtitle" id="bm-title">📗 教材を追加</span>
+      <button class="xbtn" onclick="closeOv('book-ov')">✕</button>
+    </div>
+    <div class="sfield">
+      <label for="f-name">教材名</label>
+      <input type="text" id="f-name" placeholder="例: 財務会計論テキスト" autocomplete="off">
+    </div>
+    <div class="sfield">
+      <label for="f-total">総ページ数</label>
+      <input type="number" id="f-total" placeholder="例: 500" inputmode="numeric" autocomplete="off">
+    </div>
+    <div class="sfield">
+      <label for="f-cur">現在のページ</label>
+      <input type="number" id="f-cur" placeholder="例: 120" inputmode="numeric" autocomplete="off">
+    </div>
+    <div class="sfield">
+      <label>表紙画像（任意）</label>
+      <input type="file" id="f-img" accept="image/*" style="color:rgba(255,255,255,0.6);font-size:14px;background:none;border:none;padding:0;width:100%;">
+      <img id="f-prev" style="width:54px;height:72px;object-fit:cover;border-radius:6px;margin-top:8px;display:none;">
+    </div>
+    <button class="pbtn" id="bm-btn" onclick="saveBook()">追加する</button>
+  </div>
+</div>
+
+<!-- 設定モーダル -->
+<div class="ov" id="cfg-ov" onclick="ovClick(event,'cfg-ov')">
+  <div class="sheet">
+    <div class="shhead">
+      <span class="shtitle">⚙️ 設定</span>
+      <button class="xbtn" onclick="closeOv('cfg-ov')">✕</button>
+    </div>
+    <div class="sfield">
+      <label for="f-goal">週間目標ページ数</label>
+      <input type="number" id="f-goal" placeholder="例: 100" inputmode="numeric" autocomplete="off">
+    </div>
+    <button class="pbtn" onclick="saveGoal()">保存する</button>
+    <div class="ibox" id="ibox"></div>
+  </div>
+</div>
+
+<!-- 確認ダイアログ -->
+<div id="cfov">
+  <div class="cfbox">
+    <p id="cf-msg"></p>
+    <div class="cfbtns">
+      <button id="cf-cancel" onclick="closeCf()">キャンセル</button>
+      <button id="cf-ok"></button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import{initializeApp}from'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import{getAuth,signInWithEmailAndPassword,createUserWithEmailAndPassword,signOut,onAuthStateChanged}from'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+import{getFirestore,doc,collection,setDoc,deleteDoc,onSnapshot,enableNetwork,serverTimestamp,query,orderBy}from'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+const FIXED_ID='CPA_ROOT_V7000';
+const DEF_GOAL=100;
+const DAYS=['日','月','火','水','木','金','土'];
+const MSGS=['今日も一歩前進！合格まであと少し！','継続は力なり。君なら絶対できる！','難しい問題も積み重ねで必ず解ける！','一日一日を大切に。合格は目の前だ！','諦めなければ必ず道は開ける！','今の努力が未来の自分を救う！','合格くんはいつも君の味方だぞ！','小さな積み重ねが大きな結果に！','今日の頑張りを明日の自分が感謝する！','財務諸表も最初は誰でも苦手。大丈夫！'];
+
+const fbApp=initializeApp({apiKey:'AIzaSyBgPwP-30BuXvuydRe6NsYJInMVMlmaWsE',authDomain:'cpa-tracker-a0f14.firebaseapp.com',projectId:'cpa-tracker-a0f14',storageBucket:'cpa-tracker-a0f14.firebasestorage.app',messagingSenderId:'77528125896',appId:'1:77528125896:web:13829c71b21a7870d870fd'});
+const auth=getAuth(fbApp);
+const db=getFirestore(fbApp);
+
+let uid=null,books=[],goal=DEF_GOAL,lastMon=null,tlog={pages:0,startOfDayPages:0},editId=null,cfCb=null,unsubs=[];
+let msgQ=shuf([...MSGS]),msgI=0;
+
+const pad=n=>String(n).padStart(2,'0');
+const today=()=>{const d=new Date();return`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;};
+const monday=()=>{const d=new Date(),diff=d.getDay()===0?-6:1-d.getDay();d.setDate(d.getDate()+diff);return`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;};
+function shuf(a){const b=[...a];for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];}return b;}
+const P=()=>({
+  st:doc(db,`artifacts/${FIXED_ID}/users/${uid}/settings/weeklyGoal`),
+  tc:collection(db,`artifacts/${FIXED_ID}/users/${uid}/textbooks`),
+  tb:id=>doc(db,`artifacts/${FIXED_ID}/users/${uid}/textbooks/${id}`),
+  lg:dt=>doc(db,`artifacts/${FIXED_ID}/users/${uid}/dailyLogs/${dt}`),
+});
+function setSd(s){document.getElementById('syncdot').style.background=s==='ok'?'#48bb78':s==='saving'?'#f6ad55':'#fc8181';}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function resizeImg(file){return new Promise(res=>{const r=new FileReader();r.onload=e=>{const img=new Image();img.onload=()=>{let[w,h]=[img.width,img.height];if(w>200){h=h*200/w;w=200;}if(h>200){w=w*200/h;h=200;}const c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').drawImage(img,0,0,w,h);res(c.toDataURL('image/jpeg',0.7));};img.src=e.target.result;};r.readAsDataURL(file);});}
+
+// AUTH
+let isNew=false;
+window.switchTab=s=>{isNew=s;document.getElementById('tab-l').className=s?'':'on';document.getElementById('tab-s').className=s?'on':'';document.getElementById('l-btn').textContent=s?'アカウント作成':'ログイン';document.getElementById('l-err').style.display='none';};
+window.doAuth=async()=>{
+  const email=document.getElementById('l-email').value.trim();
+  const pass=document.getElementById('l-pass').value;
+  const err=document.getElementById('l-err');
+  const btn=document.getElementById('l-btn');
+  if(!email||!pass){err.textContent='メールとパスワードを入力してください';err.style.display='block';return;}
+  btn.disabled=true;btn.textContent='処理中...';err.style.display='none';
+  try{isNew?await createUserWithEmailAndPassword(auth,email,pass):await signInWithEmailAndPassword(auth,email,pass);}
+  catch(e){
+    const m={'auth/user-not-found':'メールが見つかりません','auth/wrong-password':'パスワードが違います','auth/invalid-credential':'メールまたはパスワードが違います','auth/email-already-in-use':'このメールは使用済みです','auth/weak-password':'パスワードは6文字以上','auth/invalid-email':'メールの形式が正しくありません'};
+    err.textContent=m[e.code]||e.message;err.style.display='block';btn.disabled=false;btn.textContent=isNew?'アカウント作成':'ログイン';
+  }
+};
+
+onAuthStateChanged(auth,u=>{
+  if(u){uid=u.uid;document.getElementById('login-screen').style.display='none';document.getElementById('app').style.display='block';startApp();}
+  else{uid=null;unsubs.forEach(f=>f());unsubs=[];document.getElementById('login-screen').style.display='flex';document.getElementById('app').style.display='none';}
+});
+
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')enableNetwork(db).catch(()=>{});});
+setInterval(()=>enableNetwork(db).catch(()=>{}),60000);
+
+// APP
+function startApp(){
+  const p=P();
+  unsubs.push(onSnapshot(p.st,snap=>{
+    if(snap.exists()){const d=snap.data();goal=d.target??DEF_GOAL;lastMon=d.lastResetMonday??null;chkMon();}
+    else setDoc(p.st,{target:DEF_GOAL,lastResetMonday:monday(),updatedAt:serverTimestamp()}).catch(console.error);
+    render();
+  },console.error));
+  unsubs.push(onSnapshot(query(p.tc,orderBy('order','asc')),snap=>{books=snap.docs.map(d=>({id:d.id,...d.data()}));renderBooks();render();},console.error));
+  unsubs.push(onSnapshot(p.lg(today()),snap=>{if(snap.exists())tlog=snap.data();render();},console.error));
+  updateClock();setInterval(updateClock,1000);
+  document.getElementById('ibox').innerHTML=`🔑 UID: ${uid.slice(0,12)}...<br>📡 固定ID: ${FIXED_ID}`;
+  document.getElementById('f-img').addEventListener('change',async e=>{
+    const f=e.target.files?.[0];if(!f)return;
+    const b64=await resizeImg(f);const pv=document.getElementById('f-prev');pv.src=b64;pv.style.display='block';
+  });
+}
+
+function chkMon(){if(!lastMon)return;const m=monday();if(lastMon!==m)setDoc(P().st,{lastResetMonday:m,updatedAt:serverTimestamp()},{merge:true}).catch(console.error);}
+function updateClock(){const d=new Date();document.getElementById('clock').textContent=`${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;document.getElementById('datedisp').textContent=`${d.getFullYear()}/${pad(d.getMonth()+1)}/${pad(d.getDate())}(${DAYS[d.getDay()]})`;}
+
+function render(){
+  const tot=books.reduce((s,b)=>s+(b.currentPage||0),0);
+  const totPg=books.reduce((s,b)=>s+(b.totalPages||0),0);
+  const pct=totPg>0?Math.min(100,Math.round(tot/totPg*100)):0;
+  const tp=Math.max(0,tot-(tlog.startOfDayPages||0));
+  const rem=Math.max(0,goal-tp);
+  document.getElementById('v-rem').textContent=rem;
+  document.getElementById('v-today').textContent=tp;
+  document.getElementById('v-goal').textContent=goal;
+  document.getElementById('v-cnt').textContent=books.length;
+  // 全体進捗
+  const ow=document.getElementById('overall-wrap');
+  if(books.length>0){
+    ow.style.display='block';
+    document.getElementById('v-pct').textContent=pct;
+    document.getElementById('v-pages').textContent=`（${tot} / ${totPg} p）`;
+    const fill=document.getElementById('overall-fill');
+    fill.style.width=pct+'%';
+    fill.style.background=pct>=100?'#68d391':'linear-gradient(90deg,#7c3aed,#a78bfa)';
+  }else{ow.style.display='none';}
+}
+
+function renderBooks(){
+  const el=document.getElementById('blist');
+  if(!books.length){el.innerHTML='<div class="empty"><div class="eic">📭</div><div>「＋ 追加」から教材を登録してください</div></div>';return;}
+  el.innerHTML=books.map((b,i)=>{
+    const pct=b.totalPages>0?Math.min(100,Math.round((b.currentPage||0)/b.totalPages*100)):0;
+    const bc=pct>=100?'#68d391':pct>=50?'#63b3ed':'#f6ad55';
+    const cov=b.imageBase64?`<img src="${b.imageBase64}" alt="">`:'📗';
+    return`<div class="bcard"><div class="btop"><div class="bcover">${cov}</div><div class="binfo"><div class="bname">${esc(b.name)}</div><div class="bpages">${b.currentPage||0} / ${b.totalPages||'?'} p — ${pct}%</div><div class="pbar"><div class="pfill" style="width:${pct}%;background:${bc}"></div></div></div></div><div class="bact"><div class="pbtns"><button class="sb g" onclick="chPg('${b.id}',1)">+1</button><button class="sb g" onclick="chPg('${b.id}',5)">+5</button><button class="sb g" onclick="chPg('${b.id}',10)">+10</button><button class="sb r" onclick="chPg('${b.id}',-1)">-1</button></div><div class="cbtns"><button class="sb gy" onclick="mvB(${i},-1)"${i===0?' disabled':''}>▲</button><button class="sb gy" onclick="mvB(${i},1)"${i===books.length-1?' disabled':''}>▼</button><button class="sb b" onclick="opEd('${b.id}')">✏️</button><button class="sb r" onclick="askDel('${b.id}')">🗑</button></div></div></div>`;
+  }).join('');
+}
+
+window.chPg=async(id,d)=>{
+  const b=books.find(x=>x.id===id);if(!b)return;
+  const np=Math.max(0,Math.min((b.currentPage||0)+d,b.totalPages||999999));
+  setSd('saving');
+  try{
+    await setDoc(P().tb(id),{currentPage:np,updatedAt:serverTimestamp()},{merge:true});
+    const nt=books.reduce((s,x)=>x.id===id?s+np:s+(x.currentPage||0),0);
+    await setDoc(P().lg(today()),{pages:Math.max(0,nt-(tlog.startOfDayPages||0)),startOfDayPages:tlog.startOfDayPages||0,updatedAt:serverTimestamp()},{merge:true});
+    setSd('ok');
+  }catch(e){console.error(e);setSd('err');}
+};
+window.mvB=async(i,d)=>{const j=i+d;if(j<0||j>=books.length)return;setSd('saving');try{await Promise.all([setDoc(P().tb(books[i].id),{order:j},{merge:true}),setDoc(P().tb(books[j].id),{order:i},{merge:true})]);setSd('ok');}catch(e){setSd('err');}};
+window.openAdd=()=>{editId=null;document.getElementById('bm-title').textContent='📗 教材を追加';document.getElementById('bm-btn').textContent='追加する';document.getElementById('f-name').value='';document.getElementById('f-total').value='';document.getElementById('f-cur').value='';document.getElementById('f-img').value='';document.getElementById('f-prev').style.display='none';openOv('book-ov');};
+window.opEd=id=>{const b=books.find(x=>x.id===id);if(!b)return;editId=id;document.getElementById('bm-title').textContent='✏️ 教材を編集';document.getElementById('bm-btn').textContent='保存する';document.getElementById('f-name').value=b.name;document.getElementById('f-total').value=b.totalPages||'';document.getElementById('f-cur').value=b.currentPage||'';document.getElementById('f-img').value='';const pv=document.getElementById('f-prev');if(b.imageBase64){pv.src=b.imageBase64;pv.style.display='block';}else{pv.style.display='none';}openOv('book-ov');};
+window.saveBook=async()=>{
+  const name=document.getElementById('f-name').value.trim();
+  const total=parseInt(document.getElementById('f-total').value)||0;
+  const cur=Math.min(parseInt(document.getElementById('f-cur').value)||0,total||999999);
+  const pv=document.getElementById('f-prev');const img=pv.style.display!=='none'?pv.src:'';
+  if(!name){alert('教材名を入力してください');return;}
+  closeOv('book-ov');setSd('saving');
+  try{
+    if(editId){const old=books.find(b=>b.id===editId);await setDoc(P().tb(editId),{name,totalPages:total,currentPage:cur,imageBase64:img||(old?.imageBase64||''),order:old?.order??Date.now(),updatedAt:serverTimestamp()},{merge:true});}
+    else{const id=`book_${Date.now()}`;const mo=books.length?Math.max(...books.map(b=>b.order??0)):0;await setDoc(P().tb(id),{name,totalPages:total,currentPage:cur,imageBase64:img,order:mo+1,updatedAt:serverTimestamp()});}
+    setSd('ok');
+  }catch(e){console.error(e);setSd('err');}
+};
+window.askDel=id=>showCf('この教材を削除しますか？','削除する',false,async()=>{setSd('saving');try{await deleteDoc(P().tb(id));setSd('ok');}catch(e){setSd('err');}});
+window.openSettings=()=>{document.getElementById('f-goal').value=goal;openOv('cfg-ov');};
+window.saveGoal=async()=>{const v=parseInt(document.getElementById('f-goal').value);if(!v||v<1)return;closeOv('cfg-ov');setSd('saving');try{await setDoc(P().st,{target:v,lastResetMonday:monday(),updatedAt:serverTimestamp()},{merge:true});setSd('ok');}catch(e){setSd('err');}};
+window.askLogout=()=>showCf('ログアウトしますか？','ログアウト',true,()=>signOut(auth));
+window.showMsg=()=>{if(msgI>=msgQ.length){msgQ=shuf([...MSGS]);msgI=0;}const b=document.getElementById('bubble');b.textContent=msgQ[msgI++];b.style.display='block';setTimeout(()=>b.style.display='none',4500);};
+setInterval(window.showMsg,30000);
+window.openOv=id=>document.getElementById(id).classList.add('open');
+window.closeOv=id=>document.getElementById(id).classList.remove('open');
+window.ovClick=(e,id)=>{if(e.target===e.currentTarget)closeOv(id);};
+function showCf(msg,okLabel,blue,cb){cfCb=cb;document.getElementById('cf-msg').textContent=msg;const ok=document.getElementById('cf-ok');ok.textContent=okLabel;ok.className=blue?'blue':'';document.getElementById('cfov').classList.add('open');}
+window.closeCf=()=>{document.getElementById('cfov').classList.remove('open');cfCb=null;};
+document.getElementById('cf-ok').addEventListener('click',()=>{closeCf();if(cfCb)cfCb();});
+</script>
+</body>
+</html>
